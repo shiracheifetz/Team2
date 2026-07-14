@@ -1,5 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { fetchAuthSession } from "aws-amplify/auth";
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
@@ -10,6 +11,9 @@ const CORS_HEADERS = {
 };
 
 export const handler = async (event) => {
+  const claims = event.requestContext.authorizer.jwt.claims;
+  const userId = claims.sub;
+
   try {
     const { cartId, menuItemId } = event.pathParameters || {};
 
@@ -17,7 +21,7 @@ export const handler = async (event) => {
       new DeleteCommand({
         TableName: process.env.TABLE_NAME,
         Key: {
-          PK: `CART#${cartId}`,
+          PK: `CART`,
           SK: `MENUITEM#${menuItemId}`,
         },
       }),

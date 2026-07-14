@@ -11,6 +11,9 @@ const CORS_HEADERS = {
 };
 
 export const handler = async (event) => {
+  const claims = event.requestContext.authorizer.jwt.claims;
+  const userId = claims.sub;
+
   try {
     const cartId = event.pathParameters?.cartId;
     const menuItemId = event.pathParameters?.menuItemId;
@@ -32,7 +35,7 @@ export const handler = async (event) => {
     const params = {
       TableName: TABLE_NAME,
       Key: {
-        PK: `CART#${cartId}`,
+        PK: `CART`,
         SK: `MENUITEM#${menuItemId}`,
       },
       UpdateExpression: "SET quantity = :newQuantity",
@@ -58,7 +61,10 @@ export const handler = async (event) => {
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ message: "Internal Server Error", error: error.message }),
+      body: JSON.stringify({
+        message: "Internal Server Error",
+        error: error.message,
+      }),
     };
   }
 };

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import "./Navbar.css";
 
-const Navbar = ({ cartItems = [] }) => {
+// Added signOut and user to the destructive props list
+const Navbar = ({ cartItems = [], signOut, user }) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -35,11 +36,15 @@ const Navbar = ({ cartItems = [] }) => {
           <li>
             <button onClick={() => scrollTo("contact")}>Visit Us</button>
           </li>
-          {/* <li>
-            <button className="navbar__cta" onClick={() => scrollTo("order")}>
-              Order Now
-            </button>
-          </li> */}
+
+          {/* Welcome Message displaying user email/login ID */}
+          {user?.signInDetails?.loginId && (
+            <li className="navbar__welcome">
+              <span>Welcome, {user.signInDetails.loginId}!</span>{" "}
+              {/* [cite: 221] */}
+            </li>
+          )}
+
           <li>
             <button
               className="navbar__cta"
@@ -47,6 +52,13 @@ const Navbar = ({ cartItems = [] }) => {
               aria-label={`Cart, ${cartItems.length} item${cartItems.length === 1 ? "" : "s"}`}
             >
               <span aria-hidden="true">🛒 Cart ({cartItems.length})</span>
+            </button>
+          </li>
+
+          {/* Sign Out Button */}
+          <li>
+            <button className="navbar__signout" onClick={signOut}>
+              Sign Out {/* [cite: 222] */}
             </button>
           </li>
         </ul>

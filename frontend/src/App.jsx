@@ -1,3 +1,4 @@
+import "./amplify-config.js"; // <-- Make this the absolute first line in both files!
 import React, { useState } from "react";
 import "./App.css";
 import Navbar from "./components/Navbar";
@@ -10,6 +11,8 @@ import Cart from "./components/Cart";
 import Checkout from "./components/Checkout";
 import Footer from "./components/Footer";
 import { useCart } from "./hooks/useCart";
+import { Authenticator } from "@aws-amplify/ui-react"; // [cite: 214]
+import "@aws-amplify/ui-react/styles.css";
 
 const NYC_TAX_RATE = 0.08875;
 
@@ -26,31 +29,36 @@ function App() {
   const total = subtotal + subtotal * NYC_TAX_RATE;
 
   return (
-    <div className="App">
-      <Navbar cartItems={cartItems} />
-      <Hero />
-      <Menu onAddToCart={addToCart} />
-      <About />
-      <Order />
-      <Contact />
-
-      <Cart
-        cartItems={cartItems}
-        onUpdateQuantity={updateQuantity}
-        onRemoveItem={removeItem}
-        onCheckout={() => setShowCheckout(true)}
-      />
-
-      {showCheckout && (
-        <Checkout
-          total={total}
-          onSubmit={checkout}
-          onClose={() => setShowCheckout(false)}
-        />
+    <Authenticator>
+      {(
+        { signOut, user }, //
+      ) => (
+        <div className="App">
+          {/* Passed signOut and user down to Navbar so you can handle signout buttons and display usernames there */}
+          <Navbar cartItems={cartItems} signOut={signOut} user={user} />{" "}
+          {/*  */}
+          <Hero />
+          <Menu onAddToCart={addToCart} />
+          <About />
+          <Order />
+          <Contact />
+          <Cart
+            cartItems={cartItems}
+            onUpdateQuantity={updateQuantity}
+            onRemoveItem={removeItem}
+            onCheckout={() => setShowCheckout(true)}
+          />
+          {showCheckout && (
+            <Checkout
+              total={total}
+              onSubmit={checkout}
+              onClose={() => setShowCheckout(false)}
+            />
+          )}
+          <Footer />
+        </div>
       )}
-
-      <Footer />
-    </div>
+    </Authenticator> // [cite: 225]
   );
 }
 

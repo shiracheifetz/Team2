@@ -29,6 +29,8 @@ const CORS_HEADERS = {
 };
 
 export const handler = async (event) => {
+  const claims = event.requestContext.authorizer.jwt.claims;
+  const userId = claims.sub;
   try {
     const cartId = event.pathParameters?.cartId;
 
@@ -45,7 +47,7 @@ export const handler = async (event) => {
       new QueryCommand({
         TableName: TABLE_NAME,
         KeyConditionExpression: "PK = :pk",
-        ExpressionAttributeValues: { ":pk": `CART#${cartId}` },
+        ExpressionAttributeValues: { ":pk": `CART#${userId}` },
       }),
     );
 
@@ -119,7 +121,7 @@ export const handler = async (event) => {
         docClient.send(
           new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: { PK: `CART#${cartId}`, SK: item.SK },
+            Key: { PK: `CART#${userId}`, SK: item.SK },
           }),
         ),
       ),

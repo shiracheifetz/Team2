@@ -11,18 +11,15 @@ const CORS_HEADERS = {
 
 export const handler = async (event) => {
   try {
-    const cartId = event.pathParameters?.cartId;
+    // 1. Extract the secure user identity inside the try block
+    const claims = event.requestContext.authorizer.jwt.claims;
+    const userId = claims.sub;
+    console.log("User:", claims.sub);
 
-    if (!cartId) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ message: "Missing cartId in path" }),
-      };
-    }
+    // 2. Build the partition key using the secure Cognito userId instead of an insecure path parameter
+    const pk = `CART`;
 
-    const pk = `CART#${cartId}`;
-
+    // 3. Query DynamoDB for this specific user's cart items
     const itemsResult = await dynamodb.send(
       new QueryCommand({
         TableName: process.env.TABLE_NAME,
@@ -33,6 +30,7 @@ export const handler = async (event) => {
       }),
     );
 
+    // 4. Return the items back to your frontend
     return {
       statusCode: 200,
       headers: CORS_HEADERS,

@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   FOLD ordering app backend — DynamoDB single-table design, 5 Lambda
-  functions, and an HTTP API (foldApi) that connects them to the frontend.
+  functions, and an HTTP API (foldApi) that connects them to the frontend with Cognito Auth.
 
 Globals:
   Function:
@@ -13,10 +13,18 @@ Globals:
       Variables:
         TABLE_NAME: !Ref FoldTable
 
+# 1. PARAMETERS (Defined at the root level, before Resources)
+Parameters:
+  ExistingUserPoolId:
+    Type: String
+    Description: "The ID of your existing Cognito User Pool"
+  ExistingUserPoolClientId:
+    Type: String
+    Description: "The ID of your existing Cognito App Client"
+
 Resources:
   # ---------------------------------------------------------------------
-  # DynamoDB — single table, PK/SK composite key (see backend/lambdas for
-  # the access patterns each function relies on)
+  # DynamoDB — single table
   # ---------------------------------------------------------------------
   FoldTable:
     Type: AWS::DynamoDB::Table
@@ -34,8 +42,7 @@ Resources:
           KeyType: RANGE
 
   # ---------------------------------------------------------------------
-  # HTTP API — shared across all 5 routes, CORS open (no auth configured,
-  # matching the existing public foldApi)
+  # HTTP API with Cognito Authorizer Configured
   # ---------------------------------------------------------------------
   FoldHttpApi:
     Type: AWS::Serverless::HttpApi
@@ -50,6 +57,15 @@ Resources:
           - OPTIONS
         AllowHeaders:
           - Content-Type
+          - Authorization
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            IdentitySource: "$request.header.Authorization"
+            JwtConfiguration:
+              issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${ExistingUserPoolId}"
+              audience:
+                - !Ref ExistingUserPoolClientId
 
   # ---------------------------------------------------------------------
   # Lambda functions
@@ -69,8 +85,10 @@ Resources:
           Type: HttpApi
           Properties:
             ApiId: !Ref FoldHttpApi
-            Path: /GetCart/cart/{cartId}
+            Path: /cart
             Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   UpdateCartItemFunction:
     Type: AWS::Serverless::Function
@@ -87,8 +105,10 @@ Resources:
           Type: HttpApi
           Properties:
             ApiId: !Ref FoldHttpApi
-            Path: /updateCartItem/cart/{cartId}/menuItem/{menuItemId}
+            Path: /cart/menuItem/{menuItemId}
             Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   DeleteItemFunction:
     Type: AWS::Serverless::Function
@@ -105,8 +125,10 @@ Resources:
           Type: HttpApi
           Properties:
             ApiId: !Ref FoldHttpApi
-            Path: /deleteFromCart/cart/{cartId}/menuItem/{menuItemId}
+            Path: /cart/menuItem/{menuItemId}
             Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   GetMenuItemsFunction:
     Type: AWS::Serverless::Function
@@ -145,8 +167,10 @@ Resources:
           Type: HttpApi
           Properties:
             ApiId: !Ref FoldHttpApi
-            Path: /placeOrder/cart/{cartId}
+            Path: /placeOrder
             Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
 
 Outputs:
   ApiEndpoint:
@@ -155,3 +179,9 @@ Outputs:
   TableName:
     Description: Name of the DynamoDB table
     Value: !Ref FoldTable
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref ExistingUserPoolId
+  UserPoolClientId:
+    Description: Cognito App Client ID
+    Value: !Ref ExistingUserPoolClientId
