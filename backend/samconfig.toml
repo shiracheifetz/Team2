@@ -1,7 +1,7 @@
 version = 0.1
 
 [default.deploy.parameters]
-stack_name = "fold-api"
+stack_name = "fold-api-2"
 resolve_s3 = true
 s3_prefix = "fold-api"
 confirm_changeset = true

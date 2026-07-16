@@ -7,7 +7,7 @@ const TABLE_NAME = process.env.TABLE_NAME;
 
 // This route is public (no Cognito authorizer attached in template.yaml),
 // so there's no auth context to read here.
-export const handler = async () => {
+export const handler = async (event) => {
   try {
     const command = new ScanCommand({
       TableName: TABLE_NAME,
